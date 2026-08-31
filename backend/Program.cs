@@ -230,6 +230,9 @@ try
     builder.Services.AddScoped<IPositionService, PositionService>();
     builder.Services.AddScoped<IAccessRuleEvaluationService, AccessRuleEvaluationService>();
     builder.Services.AddScoped<ICVService, CVService>();
+    builder.Services.AddScoped<IDiscussionService, DiscussionService>();
+    builder.Services.AddScoped<ISearchService, SearchService>();
+    builder.Services.AddScoped<IStatisticsService, StatisticsService>();
 
     // ─────────────────────────────────────────────────────────────────────────
     // Build the app
