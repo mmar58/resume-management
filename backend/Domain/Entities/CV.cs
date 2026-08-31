@@ -28,4 +28,6 @@ public class CV
     public CandidateProfile CandidateProfile { get; set; } = null!;
     public Position Position { get; set; } = null!;
     public ICollection<CVLike> Likes { get; set; } = [];
+    public ICollection<CVAttributeValue> SelectedAttributes { get; set; } = [];
+    public ICollection<CVProject> SelectedProjects { get; set; } = [];
 }

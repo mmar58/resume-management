@@ -27,6 +27,8 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole<Guid>, Guid>
     public DbSet<PositionProjectTag> PositionProjectTags => Set<PositionProjectTag>();
     public DbSet<PositionAccessRule> PositionAccessRules => Set<PositionAccessRule>();
     public DbSet<CV> CVs => Set<CV>();
+    public DbSet<CVAttributeValue> CVAttributeValues => Set<CVAttributeValue>();
+    public DbSet<CVProject> CVProjects => Set<CVProject>();
     public DbSet<CVLike> CVLikes => Set<CVLike>();
     public DbSet<DiscussionPost> DiscussionPosts => Set<DiscussionPost>();
     public DbSet<RecentlyUsedAttribute> RecentlyUsedAttributes => Set<RecentlyUsedAttribute>();

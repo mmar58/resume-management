@@ -22,6 +22,42 @@ public class CVConfiguration : IEntityTypeConfiguration<CV>
                .WithOne(l => l.CV)
                .HasForeignKey(l => l.CVId)
                .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(cv => cv.SelectedAttributes)
+               .WithOne(sa => sa.CV)
+               .HasForeignKey(sa => sa.CVId)
+               .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(cv => cv.SelectedProjects)
+               .WithOne(sp => sp.CV)
+               .HasForeignKey(sp => sp.CVId)
+               .OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+public class CVAttributeValueConfiguration : IEntityTypeConfiguration<CVAttributeValue>
+{
+    public void Configure(EntityTypeBuilder<CVAttributeValue> builder)
+    {
+        builder.HasIndex(a => new { a.CVId, a.CandidateAttributeValueId }).IsUnique();
+        
+        builder.HasOne(a => a.CandidateAttributeValue)
+               .WithMany()
+               .HasForeignKey(a => a.CandidateAttributeValueId)
+               .OnDelete(DeleteBehavior.Restrict);
+    }
+}
+
+public class CVProjectConfiguration : IEntityTypeConfiguration<CVProject>
+{
+    public void Configure(EntityTypeBuilder<CVProject> builder)
+    {
+        builder.HasIndex(p => new { p.CVId, p.ProjectId }).IsUnique();
+        
+        builder.HasOne(p => p.Project)
+               .WithMany()
+               .HasForeignKey(p => p.ProjectId)
+               .OnDelete(DeleteBehavior.Restrict);
     }
 }
 

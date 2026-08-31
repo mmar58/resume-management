@@ -229,6 +229,7 @@ try
     builder.Services.AddScoped<IAttributeService, AttributeService>();
     builder.Services.AddScoped<IPositionService, PositionService>();
     builder.Services.AddScoped<IAccessRuleEvaluationService, AccessRuleEvaluationService>();
+    builder.Services.AddScoped<ICVService, CVService>();
 
     // ─────────────────────────────────────────────────────────────────────────
     // Build the app
