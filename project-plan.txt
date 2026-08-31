@@ -1,0 +1,1208 @@
+# CV Management & Recruitment Platform
+
+## 1. Project Objective
+
+Build a production-quality web-based CV management and recruitment platform.
+
+The system allows:
+
+* Candidates to maintain reusable professional profiles.
+* Recruiters to create customizable job/position templates.
+* Recruiters to define reusable attributes that can be used across positions and candidate profiles.
+* Candidates to create position-specific CVs from their profile data.
+* The system to automatically generate CV content based on position requirements.
+* Recruiters to browse, search, filter, like, and discuss candidate CVs.
+* Administrators to manage the entire system.
+
+The three core features are:
+
+1. Reusable Attribute Library
+2. Customizable Position Templates
+3. Automatic CV Generation
+
+These three features must be treated as the architectural core of the application.
+
+---
+
+# 2. Technology Stack
+
+## Backend
+
+Use:
+
+* ASP.NET Core Web API
+* C#
+* Controller-based API architecture
+* Entity Framework Core
+* PostgreSQL
+* ASP.NET Core Authentication/Authorization
+* JWT authentication for API authentication
+* OAuth/social authentication with at least two providers
+* SignalR for real-time discussion updates
+* FluentValidation or equivalent validation approach
+* Swagger/OpenAPI
+* Dependency Injection
+* Async/await for database and I/O operations
+
+Do NOT use Minimal APIs. Use conventional ASP.NET Core Controllers.
+
+## Frontend
+
+Use:
+
+* Svelte / SvelteKit
+* TypeScript
+* Bootstrap
+* Responsive UI
+* Component-based architecture
+* API client layer separated from UI components
+
+The frontend and backend must remain clearly separated.
+
+The Svelte application communicates with the ASP.NET Core API through HTTP/REST APIs.
+
+---
+
+# 3. Architecture
+
+Use a modular monolith architecture.
+
+Do NOT introduce microservices unless explicitly required.
+
+Organize the backend into clear responsibilities:
+
+* API / Controllers
+* Application services
+* Domain/business logic
+* Data access
+* Entity Framework Core models/configurations
+* Authentication/authorization
+* Validation
+* DTOs
+* Infrastructure integrations
+
+Controllers must remain thin.
+
+Controllers should:
+
+1. Receive HTTP requests.
+2. Validate/authorize the request.
+3. Call application services.
+4. Return appropriate HTTP responses.
+
+Business rules must not be implemented directly inside controllers.
+
+Do not put database queries directly inside controllers.
+
+Use DTOs instead of exposing EF Core entities directly through API responses.
+
+---
+
+# 4. Core Domain
+
+The main entities are:
+
+* User
+* Role
+* Candidate Profile
+* Attribute
+* Candidate Attribute Value
+* Project
+* Project Technology Tag
+* Position
+* Position Attribute
+* Position Access Rule
+* CV
+* CV Attribute Value
+* Discussion Post
+* CV Like
+* Authentication/Social Account
+
+The exact database design should be derived from the requirements below.
+
+Avoid unnecessary denormalization.
+
+Use relational modeling wherever appropriate.
+
+---
+
+# 5. User Roles
+
+The application has exactly three primary roles:
+
+* Candidate
+* Recruiter
+* Administrator
+
+## Candidate
+
+Candidates can:
+
+* Manage their own profile.
+* Select attributes from the shared Attribute Library.
+* Fill attribute values.
+* Manage projects.
+* View positions available to them.
+* Create one CV per accessible position.
+* Edit their CVs.
+* Delete their CVs.
+* Publish CVs when requirements are satisfied.
+* Participate in discussions.
+
+Candidates must only access their own private profile and CV data.
+
+## Recruiter
+
+All Recruiters operate on the same shared pool of positions and attributes.
+
+There is NO position ownership concept.
+
+Any Recruiter can:
+
+* Create positions.
+* Duplicate positions.
+* Edit positions.
+* Delete positions.
+* Configure position access rules.
+* Configure position templates.
+* Create/edit/delete attributes in the Attribute Library.
+* Browse candidate CVs in read-only mode.
+* Search CVs.
+* Access CVs through positions or permitted public/profile views.
+* Participate in discussions.
+* Like CVs.
+
+Recruiters must NOT edit candidate CVs directly.
+
+## Administrator
+
+Administrators have unrestricted access.
+
+An Administrator can:
+
+* View all pages.
+* Edit candidate profiles.
+* Edit candidate CVs.
+* Edit positions.
+* Perform all Recruiter actions.
+* Perform all Candidate actions.
+* View/manage users.
+* Block users.
+* Unblock users.
+* Delete users.
+* Assign roles.
+* Remove roles.
+
+An Administrator effectively has owner-level access to all user data.
+
+An Administrator may also remove their own Administrator role.
+
+---
+
+# 6. Authentication
+
+Unauthenticated users may:
+
+* Register.
+* Sign in.
+* Browse available positions in read-only mode.
+* View public statistics.
+
+Unauthenticated users cannot:
+
+* Create/edit positions.
+* Browse/create candidate CVs.
+* Access private personal pages.
+* Post discussions.
+* Like CVs.
+
+Support social authentication using at least two providers.
+
+Recommended providers:
+
+* Google
+* Facebook
+
+Authentication must be implemented securely.
+
+Authorization must be enforced on the backend.
+
+Never rely only on frontend route protection for security.
+
+---
+
+# 7. Candidate Profile
+
+Every authenticated user has a personal profile.
+
+The profile contains four conceptual sections:
+
+## Me
+
+Contains mandatory built-in attributes such as:
+
+* First Name
+* Last Name
+* Location
+* Personal Photo
+
+These attributes are permanent and cannot be removed.
+
+However, they should use the same underlying attribute/value engine where practical.
+
+## Info
+
+Contains user-selected attributes from the shared Attribute Library.
+
+Candidates can:
+
+* Add attributes.
+* Remove attributes from their profile.
+* Fill/update values.
+
+## Projects
+
+Candidates maintain a reusable project library.
+
+Each project contains:
+
+* Name
+* Period/date range
+* Markdown-formatted description
+* Technology tags
+
+Technology tags must support autocomplete using previously entered tags.
+
+Projects can be:
+
+* Created
+* Edited
+* Deleted
+
+## CVs
+
+Display all CVs created by the Candidate.
+
+A Candidate may have at most one CV for each Position.
+
+A CV can be:
+
+* Created
+* Edited
+* Deleted
+* Published
+
+A CV can only be created when the Candidate currently has access to the corresponding Position.
+
+If access is later removed, the existing CV must NOT be deleted.
+
+It becomes hidden/inaccessible to the Candidate through the UI until access is restored.
+
+---
+
+# 8. Reusable Attribute Library
+
+This is one of the three core features.
+
+The Attribute Library is a shared library managed by Recruiters.
+
+Attributes can be reused across:
+
+* Candidate profiles
+* Positions
+* CVs
+
+Recruiters can:
+
+* Create attributes.
+* Edit attributes.
+* Delete attributes.
+
+Each attribute contains:
+
+* Category
+* Globally unique Name
+* Description
+* Data Type
+
+Example categories:
+
+* Certification
+* Domain Knowledge
+* Personal Information
+* Soft Skills
+
+Supported attribute types:
+
+1. String
+
+   * Single-line plain text.
+
+2. Text
+
+   * Markdown-formatted text.
+
+3. Image
+
+   * Stored in external/cloud storage.
+   * Never store uploaded image binaries directly in the database or web server.
+
+4. Numeric
+
+5. Date
+
+6. Period
+
+   * Start date + end date.
+
+7. Boolean
+
+   * Checkbox.
+
+8. OneOfMany
+
+   * Dropdown/select value.
+
+The system must represent these types in a way that allows the same attribute definition to be reused throughout the application.
+
+Do not create a separate hard-coded database column for every possible custom attribute.
+
+The architecture must support arbitrary future attributes.
+
+---
+
+# 9. Attribute Selection
+
+Because the Attribute Library may become large, attribute selection must support:
+
+* Prefix lookup.
+* Recently used attributes.
+* Category filtering.
+
+The frontend should provide an efficient attribute-selection component rather than loading the entire library unnecessarily.
+
+Use server-side filtering/pagination where appropriate.
+
+---
+
+# 10. Position Templates
+
+A Position is a customizable CV template.
+
+Recruiters share the same Position pool.
+
+Recruiters can:
+
+* Create a blank Position.
+* Duplicate an existing Position.
+* Edit any Position.
+* Delete any Position.
+
+A Position contains:
+
+* Title
+* Short Description
+* Access Rules
+* Selected Attribute Library attributes
+* Project technology tags
+* Maximum number of projects included in generated CVs
+
+Optional useful metadata may include:
+
+* Company
+* Level
+* Junior/Middle/Senior/C-level
+
+These fields may be implemented if they help filtering and sorting.
+
+---
+
+# 11. Position Access Rules
+
+A Position can be:
+
+* Public to authenticated Candidates.
+* Restricted using attribute-based filters.
+
+Access rules operate against Candidate attribute values.
+
+Examples:
+
+* IELTS Score > 7.0
+* Remote Work = true
+* Presentation Skills = Advanced
+
+The available comparison operators must depend on the attribute's data type.
+
+For example:
+
+Numeric:
+
+* =
+* !=
+* >
+* > =
+* <
+* <=
+
+Boolean:
+
+* true
+* false
+
+Dropdown:
+
+* equals
+* not equals
+
+Text/string:
+
+* equals
+* contains
+* starts with
+* etc., where appropriate.
+
+Date/period rules must use suitable date comparisons.
+
+The access-rule system must be extensible and strongly typed.
+
+Do not implement all attribute comparisons as string comparisons.
+
+---
+
+# 12. CV Generation
+
+This is one of the three core features.
+
+A Candidate CV is generated from:
+
+1. Candidate profile data.
+2. Selected Attribute Library values.
+3. Candidate projects filtered according to the Position.
+
+The Position determines what information appears in the CV.
+
+The generated CV must:
+
+* Have professional formatting.
+* Contain structured sections.
+* Display only relevant attributes.
+* Display only relevant projects.
+* Respect the Position's project tags.
+* Respect the maximum project count.
+
+When a Candidate creates a CV:
+
+* Relevant profile attributes should be automatically populated.
+* Missing values remain empty.
+* Missing values must be visually obvious.
+
+The Candidate can fill missing values directly from the CV.
+
+---
+
+# 13. Single Source of Truth for Attribute Values
+
+A critical architectural rule:
+
+There must be one master value for a Candidate's profile attribute.
+
+Editing an attribute from a Candidate CV must update the Candidate's underlying profile value.
+
+Do not create disconnected copies of profile values for every CV.
+
+The CV determines which attributes are displayed, while the Candidate Profile remains the source of truth for their values.
+
+When appropriate, the CV may store additional CV-specific metadata, but the master Candidate attribute value must remain centralized.
+
+---
+
+# 14. CV Editing
+
+Candidates can edit their own CVs.
+
+For each attribute:
+
+* Automatically display the Candidate's profile value.
+* Allow inline editing.
+* Empty values must be highlighted in red.
+* Saving the value updates the Candidate's master profile value.
+
+Recruiters see CVs in read-only rendered mode.
+
+Recruiters cannot modify Candidate CV data.
+
+Administrators can modify CVs.
+
+---
+
+# 15. CV Publication
+
+CVs must have a publication state.
+
+A Candidate should have an explicit Publish action.
+
+A CV can only be published when all required attributes have values.
+
+Unpublished/incomplete CVs must not be visible to Recruiters.
+
+The UI must clearly communicate missing required information.
+
+Possible states:
+
+* Draft
+* Published
+
+The state model should be designed so additional states can be added later if required.
+
+---
+
+# 16. Optimistic Locking
+
+Optimistic concurrency control is mandatory.
+
+It applies to:
+
+* Candidate attribute updates.
+* Position updates.
+* Profile auto-save operations.
+* Other mutable resources where concurrent editing is possible.
+
+Each save request must include the client's current version.
+
+The backend must:
+
+1. Receive the current version.
+2. Compare it with the persisted version.
+3. Update only if the versions match.
+4. Generate/return a new version.
+5. Reject the operation if another update already changed the record.
+
+Do not silently overwrite concurrent changes.
+
+Return an appropriate conflict response such as HTTP 409 Conflict.
+
+The frontend must handle conflicts gracefully and inform the user that newer data exists.
+
+---
+
+# 17. Profile Auto-Save
+
+Candidate profile changes must support auto-save.
+
+Requirements:
+
+* Track changes locally.
+* Do not send a request on every keystroke.
+* Save approximately every 5–10 seconds while changes exist.
+* Use optimistic locking.
+* Prevent duplicate simultaneous saves.
+* Handle network failures.
+* Handle version conflicts.
+
+The auto-save mechanism should be implemented as a reusable frontend service/store rather than duplicated across individual form fields.
+
+---
+
+# 18. Discussions
+
+Every Position has a Discussion tab.
+
+Discussion posts contain:
+
+* Author
+* Timestamp
+* Markdown-formatted text
+
+Posts are chronological.
+
+New posts are appended to the end.
+
+Users cannot insert posts between existing posts.
+
+When a Recruiter views a discussion, the author's name should link to the appropriate public profile/CV view according to authorization rules.
+
+New posts should appear for active viewers within approximately 2–5 seconds.
+
+Use SignalR for real-time updates.
+
+Do not require a full page refresh to see new posts.
+
+---
+
+# 19. CV Likes
+
+Recruiters can like CVs.
+
+Rules:
+
+* Only Recruiters can like CVs.
+* A Recruiter can give at most one like to a specific CV.
+* A Recruiter can remove their like.
+* Display the total like count in CV lists and search results.
+
+Use a unique database constraint to enforce one like per Recruiter/CV combination.
+
+Do not rely solely on frontend logic to enforce this rule.
+
+---
+
+# 20. Search
+
+Every page must provide access to full-text search through the top header.
+
+Implement full-text search using PostgreSQL native full-text search or another appropriate search solution.
+
+Search should cover relevant entities, especially:
+
+* Candidate CVs
+* Candidate/project information
+* Positions
+* Technology tags
+* Attribute-related searchable content
+
+Search must respect authorization.
+
+A Recruiter must never receive search results for CV/profile data they are not allowed to access.
+
+Do not implement search by loading every database record into application memory.
+
+Do not perform unrestricted full-table scans.
+
+---
+
+# 21. Main Dashboard
+
+The main page contains:
+
+## Latest Positions
+
+Table showing recently created or updated positions.
+
+## Most Popular Positions
+
+Top five positions ranked by number of submitted CVs.
+
+## Technology Tag Cloud
+
+Technology tags should link to:
+
+* CVs for Recruiters.
+* Positions for Candidates.
+
+Links must respect authorization.
+
+## Statistics
+
+Display statistics such as:
+
+* CVs created in the last 24 hours.
+* Total positions.
+* Total Candidates.
+* Total Recruiters.
+* Total submitted CVs.
+
+---
+
+# 22. UI and UX Rules
+
+The application must use table representation for:
+
+* Positions.
+* CVs.
+
+Do NOT use:
+
+* Card grids.
+* Tiles.
+* Gallery representation.
+
+Do NOT place individual View/Edit/Delete buttons in every table row.
+
+The assignment explicitly penalizes the N-buttons-per-row pattern.
+
+Use alternatives such as:
+
+* Row selection + toolbar.
+* Context menu.
+* Appearing actions.
+* Bulk actions.
+* Single reusable action toolbar.
+
+Tables should support:
+
+* Sorting where useful.
+* Filtering where useful.
+* Pagination.
+* Search.
+* Selection.
+
+Maintain consistent navigation throughout the application.
+
+---
+
+# 23. Internationalization
+
+Support two UI languages:
+
+* English
+* One additional language
+
+Only application UI text is translated.
+
+User-generated content is NOT translated.
+
+The selected language must be persisted for the user.
+
+Do not hard-code user-facing UI strings directly throughout Svelte components.
+
+Use a centralized localization system.
+
+---
+
+# 24. Themes
+
+Support:
+
+* Light theme
+* Dark theme
+
+The selected theme must be persisted.
+
+The UI should use a consistent theme mechanism rather than manually styling individual pages.
+
+---
+
+# 25. Responsive Design
+
+The application must work on:
+
+* Desktop
+* Tablet
+* Mobile
+
+Use Bootstrap responsive utilities/components where appropriate.
+
+Tables should remain usable on small screens.
+
+Avoid creating a desktop-only interface.
+
+---
+
+# 26. Image Storage
+
+Images must NOT be stored:
+
+* Directly in PostgreSQL.
+* Directly on the ASP.NET Core web server.
+
+Use external/cloud object storage.
+
+The database should store the appropriate external file reference/URL and metadata.
+
+Support image upload through the backend using secure validation.
+
+---
+
+# 27. Database Rules
+
+Use Entity Framework Core.
+
+Use migrations.
+
+Use proper:
+
+* Primary keys
+* Foreign keys
+* Unique constraints
+* Indexes
+* Concurrency/version fields
+* Relationships
+
+Important indexes should be created for:
+
+* Attribute names.
+* Position identifiers.
+* CV/Position relationships.
+* User identifiers.
+* Like uniqueness.
+* Access-rule lookup where useful.
+* Search-related data.
+
+Never execute database queries inside loops.
+
+Avoid N+1 queries.
+
+Do not use unrestricted `SELECT *` style data access.
+
+Only load the fields required by each operation.
+
+Use pagination for large collections.
+
+---
+
+# 28. API Design
+
+Use conventional REST APIs.
+
+Example controller groups:
+
+* AuthController
+* UsersController
+* ProfilesController
+* AttributesController
+* ProjectsController
+* PositionsController
+* PositionAccessRulesController
+* CVsController
+* DiscussionsController
+* LikesController
+* SearchController
+* StatisticsController
+* FilesController
+
+Do not blindly create one controller per database entity if a better domain boundary exists.
+
+Use DTOs such as:
+
+* CreatePositionRequest
+* UpdatePositionRequest
+* PositionResponse
+* CreateAttributeRequest
+* UpdateAttributeRequest
+* AttributeResponse
+* UpdateProfileRequest
+* CVResponse
+* PublishCVRequest
+* DiscussionPostRequest
+* SearchResponse
+
+API responses must not expose internal database implementation details.
+
+---
+
+# 29. Authorization
+
+Authorization must be implemented on the backend.
+
+Examples:
+
+Candidate:
+
+* Can edit own profile.
+* Can edit own CV.
+* Cannot edit another Candidate's profile.
+* Cannot edit Recruiter-managed Positions.
+* Cannot manage the Attribute Library.
+
+Recruiter:
+
+* Can manage all Positions.
+* Can manage shared Attributes.
+* Can view authorized Candidate CVs.
+* Cannot edit Candidate CVs.
+* Can like CVs.
+* Can participate in discussions.
+
+Administrator:
+
+* Can access everything.
+
+Authorization must be checked for every protected API operation.
+
+Never trust IDs supplied by the client.
+
+---
+
+# 30. Frontend Architecture
+
+Organize Svelte code by feature/domain rather than putting everything into a single components directory.
+
+Possible structure:
+
+* auth
+* layout
+* dashboard
+* profile
+* attributes
+* projects
+* positions
+* cvs
+* discussions
+* search
+* users
+* settings
+
+Create reusable components for:
+
+* Data tables
+* Search
+* Attribute selectors
+* Dynamic attribute editors
+* Markdown editor
+* Project editor
+* Position editor
+* Access-rule builder
+* CV renderer
+* Inline CV attribute editor
+* Confirmation dialogs
+* Toast/notification system
+* Loading/error states
+
+Avoid duplicated business logic between pages.
+
+---
+
+# 31. Dynamic Attribute UI
+
+The frontend must dynamically render the correct editor based on attribute type.
+
+Examples:
+
+String → text input
+
+Text → Markdown editor
+
+Numeric → numeric input
+
+Date → date picker
+
+Period → date-range picker
+
+Boolean → checkbox
+
+OneOfMany → dropdown
+
+Image → external image upload component
+
+Do not hard-code individual attribute names into the frontend.
+
+The UI must work for arbitrary attributes returned by the backend.
+
+---
+
+# 32. Security
+
+Implement:
+
+* Secure password handling if local authentication is implemented.
+* Secure OAuth handling.
+* JWT validation.
+* Role-based authorization.
+* Input validation.
+* File validation.
+* Proper CORS configuration.
+* Protection against unauthorized resource access.
+* Server-side validation for every important business rule.
+
+Do not trust frontend validation.
+
+Do not expose sensitive user information through APIs.
+
+---
+
+# 33. Development Strategy
+
+Implement the system incrementally.
+
+Recommended phases:
+
+### Phase 1 — Foundation
+
+* ASP.NET Core project.
+* Svelte project.
+* PostgreSQL.
+* EF Core.
+* Authentication foundation.
+* User/Role model.
+* Base layout.
+* Bootstrap.
+* Swagger.
+* Error handling.
+* Logging.
+
+### Phase 2 — Candidate Profile
+
+* Profile.
+* Built-in attributes.
+* Dynamic attributes.
+* Projects.
+* Technology tags.
+* Auto-save.
+* Optimistic locking.
+
+### Phase 3 — Attribute Library
+
+* CRUD.
+* Categories.
+* Data types.
+* Attribute selection.
+* Prefix lookup.
+* Recently used.
+* Category filtering.
+
+### Phase 4 — Positions
+
+* Position CRUD.
+* Duplication.
+* Position attributes.
+* Project tags.
+* Access rules.
+* Authorization evaluation.
+
+### Phase 5 — CV Generation
+
+* Create CV.
+* Dynamic attribute population.
+* Project filtering.
+* CV rendering.
+* Inline editing.
+* Missing-value highlighting.
+* Draft/published states.
+
+### Phase 6 — Recruitment Features
+
+* Recruiter CV browsing.
+* Search.
+* Filtering.
+* Likes.
+* Discussions.
+* SignalR updates.
+
+### Phase 7 — Dashboard
+
+* Latest positions.
+* Popular positions.
+* Tag cloud.
+* Statistics.
+
+### Phase 8 — Polish
+
+* Localization.
+* Dark/light themes.
+* Responsive behavior.
+* Error handling.
+* Loading states.
+* Empty states.
+* Accessibility.
+* Performance optimization.
+
+### Phase 9 — Optional Features
+
+Only implement these after every core requirement is working:
+
+* PDF CV export.
+* QR codes.
+* Email confirmation.
+* Badges/achievements.
+* Advanced attribute validation.
+* Aggregate CSV/Excel export.
+
+---
+
+# 34. AI Agent Development Rules
+
+You are an AI software development agent working on an existing codebase.
+
+Before implementing anything:
+
+1. Inspect the repository.
+2. Understand the existing architecture.
+3. Identify existing conventions.
+4. Do not rewrite working functionality unnecessarily.
+5. Do not introduce technologies outside the defined stack without a strong reason.
+6. Follow the existing naming conventions.
+7. Keep changes modular.
+8. Prefer reusable services/components.
+9. Do not duplicate business logic.
+10. Do not implement fake/mock functionality unless explicitly requested.
+
+Before creating a database entity:
+
+* Check existing entities.
+* Check relationships.
+* Check whether an existing entity already represents the concept.
+
+Before creating an API endpoint:
+
+* Check existing routes.
+* Check authorization requirements.
+* Check DTO conventions.
+
+Before changing database structure:
+
+* Update EF Core configuration.
+* Create the required migration.
+* Consider indexes and constraints.
+* Consider existing data.
+
+Before implementing frontend functionality:
+
+* Check existing stores/services/components.
+* Reuse existing components where possible.
+* Keep API communication outside UI components when practical.
+
+---
+
+# 35. Critical Rules the Agent Must Never Violate
+
+1. Use ASP.NET Core Controller-based Web API.
+2. Use Svelte/SvelteKit + TypeScript for the frontend.
+3. Use PostgreSQL + Entity Framework Core.
+4. Keep frontend and backend separated.
+5. Do not use microservices.
+6. Do not store custom attributes as hard-coded database columns.
+7. Support arbitrary attribute types.
+8. Candidate profile values are the master source for CV attribute values.
+9. Enforce optimistic locking.
+10. Never silently overwrite concurrent changes.
+11. Never allow Candidates to access another Candidate's private profile.
+12. Recruiters can view CVs but cannot edit them.
+13. Administrators can edit everything.
+14. All Recruiters share Positions and Attributes.
+15. Do not create a Position ownership model.
+16. A Candidate can have at most one CV per Position.
+17. Removing Position access hides existing CVs rather than deleting them.
+18. Only complete CVs can be published.
+19. Recruiter likes must be unique per Recruiter/CV.
+20. Discussions must update active viewers within approximately 2–5 seconds.
+21. Use server-side authorization.
+22. Do not perform database queries inside loops.
+23. Avoid N+1 queries.
+24. Do not store uploaded images in the database/web server.
+25. Use full-text search.
+26. Positions and CVs must use tables, not cards/tiles/galleries.
+27. Do not place individual Edit/Delete/View buttons in every table row.
+28. Do not send auto-save requests on every keystroke.
+29. Do not translate user-generated content.
+30. Do not implement optional features before the core requirements are complete.
+
+---
+
+# 36. Definition of Done
+
+A feature is not considered complete merely because the UI exists.
+
+Every feature must include, where applicable:
+
+* Database model.
+* EF Core configuration.
+* Migration.
+* Backend business logic.
+* Controller/API endpoint.
+* DTOs.
+* Validation.
+* Authorization.
+* Frontend UI.
+* API integration.
+* Loading states.
+* Error states.
+* Empty states.
+* Concurrency handling.
+* Responsive behavior.
+* Appropriate indexes/constraints.
+* Testing of important business rules.
+
+The implementation should be coherent end-to-end rather than consisting of disconnected screens.
+
+Always prioritize correctness of the three killer features over optional visual enhancements.

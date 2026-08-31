@@ -1,0 +1,30 @@
+## .NET / ASP.NET Core
+bin/
+obj/
+*.user
+.vs/
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Secrets & Environment
+.env
+.env.*
+!.env.example
+
+## CA Certificate (contains sensitive credential — never commit)
+ca.pem
+
+## Rider / JetBrains
+.idea/
+*.DotSettings.user
+
+## VS Code
+.vscode/
+
+## NuGet
+*.nupkg
+.nuget/
+
+## Publish output
+publish/
