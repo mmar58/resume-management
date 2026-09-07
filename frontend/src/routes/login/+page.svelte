@@ -3,6 +3,7 @@
   import { authState } from '$lib/state/auth.svelte';
   import { goto } from '$app/navigation';
   import { Loader2 } from '@lucide/svelte';
+  import { PUBLIC_API_BASE_URL } from '$env/static/public';
 
   let email = $state('');
   let password = $state('');
@@ -26,7 +27,7 @@
   }
 
   function handleGoogleLogin() {
-    window.location.href = `${import.meta.env.VITE_API_URL || 'http://localhost:5246/api'}/auth/google-login`;
+    window.location.href = `${PUBLIC_API_BASE_URL}/api/auth/google-login`;
   }
 </script>
 

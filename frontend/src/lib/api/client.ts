@@ -1,6 +1,7 @@
 import { authState } from '../state/auth.svelte';
+import { PUBLIC_API_BASE_URL } from '$env/static/public';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5246/api';
+const API_BASE_URL = `${PUBLIC_API_BASE_URL}/api`;
 
 interface FetchOptions extends RequestInit {
   data?: any;
